@@ -1,0 +1,80 @@
+---
+title: "Regression Models Course Project"
+author: "José Manuel Peñas"
+date: "28 de julio de 2018"
+output:
+  pdf_document:
+    df_print: kable
+    number_sections: yes
+    toc: yes
+    toc_depth: 1
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2);library(latexpdf);library(dplyr)
+```
+# Analysis
+
+**MTCARS** is the data set. . A new factor column *transmission* is added with *Automatic* and *manual* values instea}d of 0 and 1 of *am* for an easier manipulation later.
+
+```{r cars, results='hide', echo=FALSE}
+newcars <- mutate(mtcars, transmission = as.factor(ifelse(am==0,"Automatic","Manual")))
+```
+Looking at the boxplot at the appendix, it seems clear that Manual transmission cars do consumes less fuel than automatic ones. The quantity will be meassured by linear regression models.
+
+## Simple Model
+First, the analysis creates a simple model that studies the relationship between mpg, the outcome, and transmission the predictor.
+```{r simple, echo=FALSE}
+simpleModel <- lm (mpg ~ transmission,newcars)
+summary(simpleModel)
+```
+The estimate intercept represents the coefficient of Automatic cars (**17.15**) and the *transmissionManual* the difference between automatic and manual: **7.24**. 
+The P-value is lower enough to discard the null hypothesis on both cases, so transmission has a relationship with gasoline consumption. 
+As you can see on the plot generated on Appendix, the residuals plots and QQ plot are good and don't show abnormals patterns.
+The R-Squared indicates that the prediction of mpg only is influenced by 33-36 % by the transmission of the car.
+It is mandatory to check with with other variables in a multivariate model.
+
+## Multivariate Model
+First, the variables to be included in the model have to be found.
+```{r findingVars, echo=FALSE}
+# Used mtcars as we have the new char transmission column
+cor(mtcars)[1,]
+```
+The variables to include are the ones whose absolute value is bigger than **0.75**: *cyl*, *disp*,*hp*, *wt*.
+Now, the multivariate model can be generated and compared with Anova test.
+```{r multimodel, echo=FALSE}
+multiModel <- lm (mpg ~ cyl + disp + hp + wt + transmission - 1,newcars)
+summary(multiModel)
+anova(simpleModel,multiModel)
+```
+It has bigger R-Squared **0.98** and if you check the plot of the model, the 4 graphics are correct with no abnomal patterns.
+The Anova test shows a very important decrease on the Residual Sum of Squares: **720** to **163**
+
+# Conclussions
+## Is an automatic or manual transmission better for MPG
+So the boxplot as the simple and multivariates models show that the **manual transmission is better** for MPG.    
+
+## Quantify the MPG difference between automatic and manual transmissions
+The multivariate model gives **1.55** the difference between automatic and manual transmissions.
+
+# Appendix Figures
+## Boxplot:
+```{r boxplot, echo=TRUE}
+ggplot(newcars,aes(transmission, mpg, color=transmission)) +
+      geom_boxplot(outlier.colour="red", outlier.shape=16,
+             outlier.size=2, notch=FALSE)
+```
+
+## Simple Model:
+
+```{r simpFig, echo=TRUE}
+par(mfrow = c(2,2));plot(simpleModel)
+```
+
+## Multivariate Model:
+
+```{r multFig, echo=TRUE}
+par(mfrow = c(2,2));plot(multiModel)
+```
+
